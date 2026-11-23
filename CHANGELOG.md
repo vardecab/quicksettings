@@ -1,18 +1,17 @@
 # Changelog
 
-## Unreleased
+## v1.4.0 - 2026-11-23
 
 ### Added
 
 - Built-in buttons now have editable names and icons under **Quick settings → Button appearance**, with separate reset options. Overrides are stored in KOReader settings and survive plugin reinstalls.
-- Added 14 Tabler icons for custom shortcuts: body scan, AppGallery, brightness, half brightness, RSS file, letter spacing, matrix, news, notes, eye scan, trace scan, text recognition, user scan, and Wi-Fi.
+- Expanded the icon picker with black-stroke SVGs for shortcuts, including navigation arrows, bookmarks, search, brightness, RSS, and Wi-Fi.
 
 ### Changed
 
 - Custom buttons are saved outside the plugin folder in `DataStorage:getSettingsDir()/quicksettings_custom_buttons.lua`. Existing plugin-local `custom_buttons.lua` entries are imported once, including names, icons, and actions.
 - New custom buttons start with the name `none`.
-- Replaced the main tab icon with Tabler's `adjustments-heart` icon. The new main and `xquick_` icons use explicit black strokes (`#000000`) for KOReader compatibility.
-- The icon picker hides the `xquick_` filename prefix, matching its existing handling of `quick_`, `tab_`, and `lookup_`.
+- Replaced the main tab icon with Tabler's `adjustments-heart` icon. Renamed bundled shortcut icons to use the `quick_` prefix. Saved `xquick_` selections still resolve to the renamed artwork.
 
 ### Fixed
 
@@ -21,6 +20,8 @@
 - Opening the QuickSettings tab in the reader closes the bottom font/margin panel so it cannot intercept button taps. Other reader tabs retain their existing behavior.
 - Excluded macOS `._*` metadata files from the icon picker.
 - Restored or imported custom button IDs advance the allocation counter to prevent existing shortcuts from being overwritten.
+- New custom buttons appear in the reader and file browser bars as soon as an action is assigned.
+- The bar shows newly selected or replaced artwork the next time it opens, including SVGs updated under the same filename.
 
 ### Upgrade notes
 

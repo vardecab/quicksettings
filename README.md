@@ -40,7 +40,7 @@ A fast, gesture-friendly control panel for [KOReader](https://github.com/koreade
 - **Persistent settings** — button visibility, order, slider visibility, and Focus Mode preferences are saved and restored automatically.
 # Button Icons Reference
 
-Bundled icons live in the plugin's `icons/` directory and are copied to KOReader's data-directory `icons/` folder when the plugin starts. Additional user icons can also be placed in that data-directory folder. Restart KOReader after replacing icon files so cached images reload.
+Bundled icons live in the plugin's `icons/` directory and are copied to KOReader's data-directory `icons/` folder when the plugin starts. Additional user icons can also be placed in that data-directory folder. Reopen the QuickSettings bar to see replacements to its button artwork.
 
 For new SVGs from [Tabler Icons](https://tabler.io/icons), change `stroke="currentColor"` to `stroke="#000000"`. KOReader's NanoSVG renderer treats the unsupported `currentColor` value as grey. Preserve `fill="none"` and any `stroke="none"` used for invisible paths; there is no need to change the icon's geometry or stroke width.
 
@@ -149,7 +149,7 @@ The new custom button settings file contains a `buttons` table keyed by button I
 
 ## Icon attribution
 
-The replacement main icon (`quicksettings.svg`, Tabler `adjustments-heart`) and all `xquick_*.svg` additions come from [Tabler Icons](https://tabler.io/icons), by Paweł Kuna, under the [MIT license](licenses/tabler-icons-LICENSE.txt). Their strokes were changed from `currentColor` to explicit black for KOReader rendering. This attribution covers these additions, not the provenance of every pre-existing icon in the repository.
+The replacement main icon (`quicksettings.svg`, Tabler `adjustments-heart`) and the Tabler shortcut icons in `icons/` come from [Tabler Icons](https://tabler.io/icons), by Paweł Kuna, under the [MIT license](licenses/tabler-icons-LICENSE.txt). They use explicit black strokes for KOReader rendering.
 
 ## Validation
 

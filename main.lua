@@ -25,7 +25,7 @@ local Screen = Device.screen
 local Dispatcher = require("dispatcher")
 local LuaSettings = require("luasettings")
 local T = require("ffi/util").template
-local PLUGIN_VERSION = "1.3.0"
+local PLUGIN_VERSION = "1.4.0"
 
 local QuickSettingsPlugin = WidgetContainer:extend{
     name = "quicksettings",
@@ -248,12 +248,35 @@ end
 -- Inicialização Principal do Plugin
 -- ============================================================
 
+local menu_hooks_installed = false
+
 function QuickSettingsPlugin:init()
+    -- The file browser and reader create separate plugin instances, but
+    -- their menu classes must share the same live button definitions.
+    if menu_hooks_installed then return end
+
+    local plugin_path = self.path
     local DataStorage = require("datastorage")
-    local src_dir = self.path .. "/icons/"
+    local src_dir = plugin_path .. "/icons/"
     local dest_dir = DataStorage:getDataDir() .. "/icons/"
+    local icon_dirs = { src_dir, dest_dir }
+    local lfs = require("libs/libkoreader-lfs")
     os.execute("mkdir -p '" .. dest_dir .. "'")
     os.execute("cp -f '" .. src_dir .. "'* '" .. dest_dir .. "' 2>/dev/null")
+
+    local function findEditableIconFile(name)
+        if name and name:match("^xquick_") then
+            local renamed = name == "xquick_wifi" and "quick_wifi-outline" or name:sub(2)
+            local path = src_dir .. renamed .. ".svg"
+            if lfs.attributes(path, "mode") == "file" then return path end
+        end
+        for _, suffix in ipairs({ ".svg", ".png" }) do
+            for _, dir in ipairs(icon_dirs) do
+                local path = dir .. name .. suffix
+                if lfs.attributes(path, "mode") == "file" then return path end
+            end
+        end
+    end
 
     local config_default = {
         button_order = { "focus", "wifi", "night", "frontlight", "rotate", "rotation", "usb", "search", "cloud", "zlibrary", "calibre", "calibre_search", "streak", "localsend", "stats_progress", "stats_calendar", "battery_stats", "restart", "exit", "sleep", "quickrss", "opds", "puzzle", "crossword", "connections", "casualchess", "kosync", "filebrowserplus", "bookfusion" },
@@ -1070,13 +1093,20 @@ function QuickSettingsPlugin:init()
         local fixed_col_width = action_btn_size + Screen:scaleBySize(16) 
 
         local function makeActionButton(icon_name, label_text, active, dim)
-            local icon = IconWidget:new{ icon = icon_name, width = icon_size, height = icon_size, alpha = not active }
+            -- Match the picker's source and load fresh artwork on each rebuild.
+            local file = findEditableIconFile(icon_name)
+            local icon = IconWidget:new{
+                icon = icon_name, file = file, file_do_cache = not file,
+                width = icon_size, height = icon_size, alpha = not active,
+            }
             if active then
                 icon:_render()
                 if icon._bb then
-                    local bb_copy = icon._bb:copy()
-                    bb_copy:invertRect(0, 0, bb_copy:getWidth(), bb_copy:getHeight())
-                    icon._bb = bb_copy
+                    if not icon._bb_disposable then
+                        icon._bb = icon._bb:copy()
+                        icon._bb_disposable = true
+                    end
+                    icon._bb:invertRect(0, 0, icon._bb:getWidth(), icon._bb:getHeight())
                 end
             end
             local border = active and 0 or normal_border
@@ -1398,8 +1428,6 @@ function QuickSettingsPlugin:init()
     -- (resources/icons/mdlight) — assim funciona mesmo sem nenhum ícone
     -- próprio no seu plugin.
     local function getCustomButtonIconList()
-        local ok_lfs, lfs = pcall(require, "libs/libkoreader-lfs")
-        if not ok_lfs or not lfs then return {} end
         local seen, all = {}, {}
         local function addDir(dir)
             if not dir then return end
@@ -1418,9 +1446,7 @@ function QuickSettingsPlugin:init()
                 all[#all + 1] = item
             end
         end
-        addDir(self.path .. "/icons")
-        local DataStorage = require("datastorage")
-        addDir(DataStorage:getDataDir() .. "/icons")
+        for _, dir in ipairs(icon_dirs) do addDir(dir) end
         addDir(lfs.currentdir() .. "/resources/icons/mdlight")
         return all
     end
@@ -1505,7 +1531,10 @@ function QuickSettingsPlugin:init()
                 local is_sel = (current_icon == name)
                 local short = displayName(item)
                 local cell_brd = is_sel and Screen:scaleBySize(2) or Screen:scaleBySize(1)
-                local cell_icon = IW:new{ file = item.file or nil, icon = item.file and nil or name, width = icon_sz, height = icon_sz, alpha = true }
+                local cell_icon = IW:new{
+                    file = item.file, file_do_cache = false,
+                    width = icon_sz, height = icon_sz, alpha = true,
+                }
                 table.insert(picker_icon_widgets, cell_icon)
                 table.insert(row_g, FC:new{
                     width = cell_w, height = cell_h, bordersize = cell_brd,
@@ -1830,11 +1859,11 @@ function QuickSettingsPlugin:init()
             committed = true
             local id = "custom_" .. (config.next_custom_id + 1)
             config.next_custom_id = config.next_custom_id + 1
-            saveConfig()
             draft._qs_draft_commit = nil
             custom_buttons_settings.data[id] = draft
             saveCustomButtons()
             installCustomButtonDef(id)
+            saveConfig()
             invalidateMenuCache()
             if parent_items then table.insert(parent_items, buildCustomButtonMenuItem(id, parent_items)) end
         end
@@ -2089,6 +2118,7 @@ function QuickSettingsPlugin:init()
             end
         end
     end
+    menu_hooks_installed = true
 end
 
 return QuickSettingsPlugin
